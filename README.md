@@ -1,4 +1,8 @@
-[![License](https://poser.pugx.org/mediamonks/rest-api-bundle/license)](https://packagist.org/packages/mediamonks/rest-api-bundle)
+[![Total Downloads](https://poser.pugx.org/mediamonks/crawler/downloads)](https://packagist.org/packages/mediamonks/crawler)
+[![Latest Stable Version](https://poser.pugx.org/mediamonks/crawler/v/stable)](https://packagist.org/packages/mediamonks/crawler)
+[![Latest Unstable Version](https://poser.pugx.org/mediamonks/crawler/v/unstable)](https://packagist.org/packages/mediamonks/crawler)
+[![SensioLabs Insight](https://img.shields.io/sensiolabs/i/2fd407ee-3228-46c1-9ebb-40745787d454.svg)](https://insight.sensiolabs.com/projects/2fd407ee-3228-46c1-9ebb-40745787d454)
+[![License](https://poser.pugx.org/mediamonks/crawler/license)](https://packagist.org/packages/mediamonks/crawler)
 
 # MediaMonks Crawler
 
