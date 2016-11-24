@@ -1,7 +1,7 @@
 {
   "name": "mediamonks/crawler",
   "type": "library",
-  "description": "MediaMonks Crawler",
+  "description": "Crawl your own website with various clients for SEO and indexing purposes. ",
   "keywords": [
     "crawler",
     "seo",
