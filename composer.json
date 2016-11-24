@@ -1,0 +1,45 @@
+{
+  "name": "mediamonks/crawler",
+  "type": "library",
+  "description": "MediaMonks Crawler",
+  "keywords": [
+    "crawler",
+    "seo",
+    "dom",
+    "spider",
+    "robot",
+    "prerender",
+    "prerender.io"
+  ],
+  "homepage": "https://www.mediamonks.com/",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Robert Slootjes",
+      "email": "robert@mediamonks.com",
+      "homepage": "https://github.com/slootjes"
+    }
+  ],
+  "require": {
+    "php": "^5.5|~7.0",
+    "symfony/dom-crawler": "^2.8|^3.0",
+    "fabpot/goutte": "^3.0",
+    "league/uri": "^4.2"
+  },
+  "require-dev": {
+    "codeclimate/php-test-reporter": "dev-master@dev",
+    "phpunit/phpunit": "^4.8",
+    "mockery/mockery": "^0.9.4",
+    "monolog/monolog": "^1.21"
+  },
+  "autoload": {
+    "psr-4": {
+      "MediaMonks\\Crawler\\": "src/"
+    }
+  },
+  "extra": {
+    "branch-alias": {
+      "dev-master": "1.0-dev"
+    }
+  }
+}
