@@ -361,7 +361,7 @@ class Crawler implements LoggerAwareInterface
     }
 
     /**
-     * @param $url
+     * @param string $url
      * @return Url
      */
     protected function createHttpUrlString($url)
@@ -383,7 +383,7 @@ class Crawler implements LoggerAwareInterface
 
     /**
      * @param string $url
-     * @return \Generator|void
+     * @return \Generator
      */
     public function crawl($url)
     {

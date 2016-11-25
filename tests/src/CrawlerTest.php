@@ -204,6 +204,71 @@ class CrawlerTest extends \PHPUnit_Framework_TestCase
         $this->assertCount(4, $crawler->getUrlsCrawled());
     }
 
+    public function test_crawler_stop_on_error()
+    {
+        $client = m::mock(Client::class);
+
+        $i = 0;
+        $client->shouldReceive('request')->andReturnUsing(function() use(&$i) {
+            $i++;
+            switch($i) {
+                case 1:
+                    $html = '<html><body><a href="/page_1.html">Page 1</a><a href="/page_2.html">Page 2</a></body></html>';
+                    break;
+                case 2:
+                    throw new \Exception('foo');
+                case 3:
+                    $html = '<html><body><a href="/page_4.html">Page 4</a><a href="mailto:foo@bar.com">Invalid</a></body></html>';
+                    break;
+                default:
+                    $html = '<html><body><a href="/page_1.html">Page 1</a><a href="http://external/">External</a></body></html>';
+                    break;
+            }
+
+            return new DomCrawler($html, 'http://my-test');
+        });
+
+        $crawler = new Crawler($client);
+        $crawler->setStopOnError(true);
+
+        foreach ($crawler->crawl('http://my-test') as $page) {
+        }
+
+        $this->assertCount(1, $crawler->getUrlsCrawled());
+    }
+
+    public function test_crawler_does_not_stop_on_error()
+    {
+        $client = m::mock(Client::class);
+
+        $i = 0;
+        $client->shouldReceive('request')->andReturnUsing(function() use(&$i) {
+            $i++;
+            switch($i) {
+                case 1:
+                    $html = '<html><body><a href="/page_1.html">Page 1</a><a href="/page_2.html">Page 2</a></body></html>';
+                    break;
+                case 2:
+                    throw new \Exception('foo');
+                case 3:
+                    $html = '<html><body><a href="/page_4.html">Page 4</a><a href="mailto:foo@bar.com">Invalid</a></body></html>';
+                    break;
+                default:
+                    $html = '<html><body><a href="/page_1.html">Page 1</a><a href="http://external/">External</a></body></html>';
+                    break;
+            }
+
+            return new DomCrawler($html, 'http://my-test');
+        });
+
+        $crawler = new Crawler($client);
+
+        foreach ($crawler->crawl('http://my-test') as $page) {
+        }
+
+        $this->assertCount(4, $crawler->getUrlsCrawled());
+    }
+
     /**
      * @return m\MockInterface
      */
@@ -225,7 +290,7 @@ class CrawlerTest extends \PHPUnit_Framework_TestCase
                     $html = '<html><body><a href="/page_4.html">Page 4</a><a href="mailto:foo@bar.com">Invalid</a></body></html>';
                     break;
                 default:
-                    $html = '<html><body><a href="/page_1.html">Page 1</a></body></html>';
+                    $html = '<html><body><a href="/page_1.html">Page 1</a><a href="http://external/">External</a></body></html>';
                     break;
             }
 
