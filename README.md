@@ -9,9 +9,9 @@
 
 # MediaMonks Crawler
 
-This tool allows you easily to crawl a website and get a DOM object for every url that was found.
-We use this to crawl our own site pages regardless of it was generated with server and/or client side content by using a Prerender.io client.
-The resulting data can be used for creating a full site search and SEO purposes.
+This tool allows you to easily crawl a website and get a DOM object for every url that was found.
+We use this to crawl our own site pages regardless of it was generated with server and/or client side content by using the Prerender.io client.
+The resulting data can be used for both creating a full site search and improving SEO for single-page applications.
 
 ## Highlights
 
