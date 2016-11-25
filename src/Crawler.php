@@ -124,6 +124,9 @@ class Crawler implements LoggerAwareInterface
         if (isset($options['blacklist_url_matchers'])) {
             $this->setBlacklistUrlMatchers($options['blacklist_url_matchers']);
         }
+        if (isset($options['blacklist_url_matchers'])) {
+            $this->setBlacklistUrlMatchers($options['blacklist_url_matchers']);
+        }
     }
 
     /**
@@ -298,6 +301,14 @@ class Crawler implements LoggerAwareInterface
     }
 
     /**
+     * @return UrlNormalizerInterface[]
+     */
+    public function getUrlNormalizers()
+    {
+        return $this->urlNormalizers;
+    }
+
+    /**
      * @param UrlNormalizerInterface $normalizer
      * @return $this
      */
@@ -420,20 +431,18 @@ class Crawler implements LoggerAwareInterface
     protected function updateQueue(DomCrawler $crawler)
     {
         foreach ($this->extractUrlsFromCrawler($crawler) as $url) {
-            if (!in_array($url, $this->urlsRejected)) {
-                $this->getLogger()->debug(sprintf('Found url %s in page', $url));
-                try {
-                    $url = $this->normalizeUrl($this->createHttpUrlString($url));
+            $this->getLogger()->debug(sprintf('Found url %s in page', $url));
+            try {
+                $url = $this->normalizeUrl($this->createHttpUrlString($url));
 
-                    if ($this->shouldCrawlUrl($url)) {
-                        $this->addUrlToQueue($url);
-                    }
-                } catch (\Exception $e) {
-                    $this->getLogger()->warning(
-                        sprintf('Url %s could not be converted to an object: %s', $url, $e->getMessage())
-                    );
-                    $this->urlsRejected[] = $url;
+                if ($this->shouldCrawlUrl($url)) {
+                    $this->addUrlToQueue($url);
                 }
+            } catch (\Exception $e) {
+                $this->getLogger()->warning(
+                    sprintf('Url %s could not be converted to an object: %s', $url, $e->getMessage())
+                );
+                $this->urlsRejected[] = $url;
             }
         }
     }
@@ -444,7 +453,7 @@ class Crawler implements LoggerAwareInterface
      */
     protected function normalizeUrl(Url $url)
     {
-        foreach($this->urlNormalizers as $normalizer) {
+        foreach ($this->urlNormalizers as $normalizer) {
             $url = $normalizer->normalize($url);
         }
 
@@ -458,25 +467,50 @@ class Crawler implements LoggerAwareInterface
     protected function shouldReturnUrl(Url $url)
     {
         if (!empty($this->whitelistUrlMatchers)) {
-            foreach ($this->whitelistUrlMatchers as $matcher) {
-                if ($matcher->matches($url)) {
-                    return true;
-                }
-            }
-            $this->getLogger()->info(sprintf('Skipped "%s" because it is not whitelisted', $url));
-
-            return false;
-        }
-
-        foreach ($this->blacklistUrlMatchers as $matcher) {
-            if ($matcher->matches($url)) {
-                $this->getLogger()->info(sprintf('Skipped "%s" because it is blacklisted', $url));
+            if (!$this->isUrlWhitelisted($url)) {
+                $this->getLogger()->info(sprintf('Skipped "%s" because it is not whitelisted', $url));
 
                 return false;
             }
         }
 
+        if ($this->isUrlBlacklisted($url)) {
+            $this->getLogger()->info(sprintf('Skipped "%s" because it is blacklisted', $url));
+
+            return false;
+        }
+
         return true;
+    }
+
+    /**
+     * @param Url $url
+     * @return bool
+     */
+    protected function isUrlWhitelisted(Url $url)
+    {
+        foreach ($this->whitelistUrlMatchers as $matcher) {
+            if ($matcher->matches($url)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * @param Url $url
+     * @return bool
+     */
+    protected function isUrlBlacklisted(Url $url)
+    {
+        foreach ($this->blacklistUrlMatchers as $matcher) {
+            if ($matcher->matches($url)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -498,6 +532,7 @@ class Crawler implements LoggerAwareInterface
 
         if (!$this->isUrlPartOfBaseUrl($url)) {
             $this->urlsRejected[] = (string)$url;
+
             return false;
         }
 

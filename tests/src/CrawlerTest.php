@@ -3,8 +3,10 @@
 namespace tests\MediaMonks\Crawler;
 
 use MediaMonks\Crawler\Crawler;
+use MediaMonks\Crawler\Url;
 use MediaMonks\Crawler\Url\Matcher\PathRegexUrlMatcher;
 use MediaMonks\Crawler\Url\Matcher\UrlMatcherInterface;
+use MediaMonks\Crawler\Url\Normalizer\CallbackUrlNormalizer;
 use Mockery as m;
 use Psr\Log\NullLogger;
 use Symfony\Component\BrowserKit\Client;
@@ -103,6 +105,25 @@ class CrawlerTest extends \PHPUnit_Framework_TestCase
         $this->assertCount(0, $crawler->getWhitelistUrlMatchers());
     }
 
+    public function test_clear_normalizers()
+    {
+        $normalizer = m::mock(Url\Normalizer\UrlNormalizerInterface::class);
+
+        $crawler = new Crawler();
+
+        $crawler->addUrlNormalizer($normalizer);
+        $this->assertCount(1, $crawler->getUrlNormalizers());
+
+        $crawler->clearUrlNormalizers();
+        $this->assertCount(0, $crawler->getUrlNormalizers());
+
+        $crawler->setUrlNormalizers([$normalizer]);
+        $this->assertCount(1, $crawler->getUrlNormalizers());
+
+        $crawler->clearUrlNormalizers();
+        $this->assertCount(0, $crawler->getUrlNormalizers());
+    }
+
     public function test_crawl_single_page()
     {
         $domCrawler = new DomCrawler('<html></html>');
@@ -164,6 +185,23 @@ class CrawlerTest extends \PHPUnit_Framework_TestCase
 
         $this->assertCount(5, $crawler->getUrlsCrawled());
         $this->assertCount(4, $crawler->getUrlsReturned());
+    }
+
+    public function test_crawl_with_normalizer()
+    {
+        $crawler = new Crawler($this->getDummyClient());
+        $crawler->addUrlNormalizer(new CallbackUrlNormalizer(function(Url $url) {
+            if ($url->getPath() === '/page_4.html') {
+                $url = $url->withPath('/page_3.html');
+            }
+
+            return $url;
+        }));
+
+        foreach ($crawler->crawl('http://my-test') as $page) {
+        }
+
+        $this->assertCount(4, $crawler->getUrlsCrawled());
     }
 
     /**
