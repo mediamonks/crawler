@@ -9,7 +9,9 @@
     "spider",
     "robot",
     "prerender",
-    "prerender.io"
+    "prerender.io",
+    "search",
+    "index"
   ],
   "homepage": "https://www.mediamonks.com/",
   "license": "MIT",

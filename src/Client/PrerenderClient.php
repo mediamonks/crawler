@@ -14,31 +14,24 @@ class PrerenderClient extends BaseClient
     protected $prerenderUrl;
 
     /**
-     * @param string $prenderUrl The url of the prerender server
+     * @param string $prerenderUrl The url of the prerender server
      * @param array $server The server parameters (equivalent of $_SERVER)
      * @param History $history A History instance to store the browser history
      * @param CookieJar $cookieJar A CookieJar instance to store the cookies
      */
-    public function __construct($prenderUrl, array $server = [], History $history = null, CookieJar $cookieJar = null)
+    public function __construct($prerenderUrl, array $server = [], History $history = null, CookieJar $cookieJar = null)
     {
-        $this->prerenderUrl = $prenderUrl;
+        $this->prerenderUrl = $prerenderUrl;
+
         parent::__construct($server, $history, $cookieJar);
     }
 
     /**
-     * @inheritdoc
+     * @param string $uri
+     * @return string
      */
-    public function request(
-        $method,
-        $uri,
-        array $parameters = [],
-        array $files = [],
-        array $server = [],
-        $content = null,
-        $changeHistory = true
-    ) {
-        $uri = $this->prerenderUrl.$uri;
-
-        return parent::request($method, $uri, $parameters, $files, $server, $content, $changeHistory);
+    protected function getAbsoluteUri($uri)
+    {
+        return $this->prerenderUrl.parent::getAbsoluteUri($uri);
     }
 }

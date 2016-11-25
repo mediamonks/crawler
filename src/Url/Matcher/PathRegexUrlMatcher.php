@@ -25,6 +25,6 @@ class PathRegexUrlMatcher implements UrlMatcherInterface
      */
     public function matches(Url $url)
     {
-        return preg_match($this->pattern, $url->getPath());
+        return (bool)preg_match($this->pattern, $url->getPath());
     }
 }

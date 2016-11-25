@@ -14,7 +14,7 @@ class CallbackUrlNormalizer implements UrlNormalizerInterface
     /**
      * @param \Closure $callback
      */
-    public function __construct($callback)
+    public function __construct(\Closure $callback)
     {
         $this->callback = $callback;
     }

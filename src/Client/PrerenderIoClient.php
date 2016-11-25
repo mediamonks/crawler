@@ -2,11 +2,10 @@
 
 namespace MediaMonks\Crawler\Client;
 
-use Goutte\Client as BaseClient;
 use Symfony\Component\BrowserKit\History;
 use Symfony\Component\BrowserKit\CookieJar;
 
-class PrerenderIoClient extends BaseClient
+class PrerenderIoClient extends PrerenderClient
 {
     const URL = 'http://service.prerender.io/';
 
@@ -29,25 +28,11 @@ class PrerenderIoClient extends BaseClient
     public function __construct($token, array $server = [], History $history = null, CookieJar $cookieJar = null)
     {
         $this->token = $token;
+
         $server[self::HEADER_TOKEN] = $token;
         $server[self::HEADER_USER_AGENT] = self::USER_AGENT;
-        parent::__construct($server, $history, $cookieJar);
+
+        parent::__construct(self::URL, $server, $history, $cookieJar);
     }
 
-    /**
-     * @inheritdoc
-     */
-    public function request(
-        $method,
-        $uri,
-        array $parameters = [],
-        array $files = [],
-        array $server = [],
-        $content = null,
-        $changeHistory = true
-    ) {
-        $uri = self::URL.$uri;
-
-        return parent::request($method, $uri, $parameters, $files, $server, $content, $changeHistory);
-    }
 }
