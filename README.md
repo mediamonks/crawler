@@ -1,3 +1,4 @@
+[![Build Status](https://travis-ci.org/mediamonks/crawler.svg?branch=master)](https://travis-ci.org/mediamonks/crawler)
 [![Total Downloads](https://poser.pugx.org/mediamonks/crawler/downloads)](https://packagist.org/packages/mediamonks/crawler)
 [![Latest Stable Version](https://poser.pugx.org/mediamonks/crawler/v/stable)](https://packagist.org/packages/mediamonks/crawler)
 [![Latest Unstable Version](https://poser.pugx.org/mediamonks/crawler/v/unstable)](https://packagist.org/packages/mediamonks/crawler)
