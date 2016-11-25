@@ -148,7 +148,7 @@ class Crawler implements LoggerAwareInterface
     /**
      * @return boolean
      */
-    public function isStopOnError()
+    public function getStopOnError()
     {
         return $this->stopOnError;
     }
@@ -211,6 +211,14 @@ class Crawler implements LoggerAwareInterface
     }
 
     /**
+     * @return Url\Matcher\UrlMatcherInterface[]
+     */
+    public function getWhitelistUrlMatchers()
+    {
+        return $this->whitelistUrlMatchers;
+    }
+
+    /**
      * @param UrlMatcherInterface $urlMatcher
      * @return $this
      */
@@ -243,6 +251,14 @@ class Crawler implements LoggerAwareInterface
         }
 
         return $this;
+    }
+
+    /**
+     * @return Url\Matcher\UrlMatcherInterface[]
+     */
+    public function getBlacklistUrlMatchers()
+    {
+        return $this->blacklistUrlMatchers;
     }
 
     /**
@@ -328,17 +344,6 @@ class Crawler implements LoggerAwareInterface
     /**
      * @param Url $url
      */
-    protected function reset(Url $url)
-    {
-        $this->baseUrl = $url;
-        $this->urlsCrawled = [];
-        $this->urlsQueued = [];
-        $this->addUrlToQueue($url);
-    }
-
-    /**
-     * @param Url $url
-     */
     protected function addUrlToQueue(Url $url)
     {
         $this->urlsQueued[(string)$url] = $url;
@@ -354,6 +359,18 @@ class Crawler implements LoggerAwareInterface
     }
 
     /**
+     * @param Url $url
+     */
+    protected function reset(Url $url)
+    {
+        $this->baseUrl = $url;
+        $this->urlsCrawled = [];
+        $this->urlsQueued = [];
+
+        $this->addUrlToQueue($url);
+    }
+
+    /**
      * @param string $url
      * @return \Generator|void
      */
@@ -363,23 +380,15 @@ class Crawler implements LoggerAwareInterface
         $this->reset($url);
 
         while (count($this->urlsQueued) > 0) {
+
             $url = array_shift($this->urlsQueued);
-
-            $this->getLogger()->info(sprintf('Crawling page %s', $url));
-
-            if ($this->isLimitReached()) {
-                $this->getLogger()->info(sprintf('Crawl limit of %d was reach', $this->limit));
-
-                return;
-            }
 
             try {
                 $crawler = $this->requestPage((string)$url);
-                $this->getLogger()->info(sprintf('Crawled page %s', $url));
             } catch (\Exception $e) {
                 $this->getLogger()->error(sprintf('Error requesting page %s: %s', $url, $e->getMessage()));
 
-                if ($this->isStopOnError()) {
+                if ($this->getStopOnError()) {
                     return;
                 }
 
@@ -387,7 +396,6 @@ class Crawler implements LoggerAwareInterface
             }
 
             $this->urlsCrawled[] = (string)$url;
-
             $this->updateQueue($crawler);
 
             if ($this->shouldReturnUrl($url)) {
@@ -396,6 +404,12 @@ class Crawler implements LoggerAwareInterface
                 $this->urlsReturned[] = (string)$url;
 
                 yield new Page($url, $crawler);
+            }
+
+            if ($this->isLimitReached()) {
+                $this->getLogger()->info(sprintf('Crawl limit of %d was reach', $this->limit));
+
+                return;
             }
         }
     }
@@ -532,6 +546,10 @@ class Crawler implements LoggerAwareInterface
      */
     protected function requestPage($url)
     {
-        return $this->client->request('GET', $url);
+        $this->getLogger()->info(sprintf('Crawling page %s', $url));
+        $crawler = $this->client->request('GET', $url);
+        $this->getLogger()->info(sprintf('Crawled page %s', $url));
+
+        return $crawler;
     }
 }
