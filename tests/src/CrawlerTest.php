@@ -322,6 +322,32 @@ class CrawlerTest extends \PHPUnit_Framework_TestCase
         return $client;
     }
 
+    public function test_should_crawl_url()
+    {
+        $reset = get_non_public_method(Crawler::class, 'reset');
+        $shouldCrawlUrl = get_non_public_method(Crawler::class, 'shouldCrawlUrl');
+        $addToQueue = get_non_public_method(Crawler::class, 'addUrlToQueue');
+
+        $client = new Crawler();
+
+        $reset->invokeArgs($client, [Url::createFromString('http://my-website')]);
+
+        // already in queue as it is the base url
+        $this->assertFalse($shouldCrawlUrl->invokeArgs($client, [Url::createFromString('http://my-website')]));
+
+        // new page, should be crawled
+        $this->assertTrue($shouldCrawlUrl->invokeArgs($client, [Url::createFromString('http://my-website/foo')]));
+
+        // different host, should not be crawled
+        $this->assertFalse($shouldCrawlUrl->invokeArgs($client, [Url::createFromString('http://other-host')]));
+
+        // already rejected, should not be crawled
+        $this->assertFalse($shouldCrawlUrl->invokeArgs($client, [Url::createFromString('http://other-host')]));
+
+        $addToQueue->invokeArgs($client, [Url::createFromString('http://my-website/bar')]);
+        $this->assertFalse($shouldCrawlUrl->invokeArgs($client, [Url::createFromString('http://my-website/bar')]));
+    }
+
     protected function tearDown()
     {
         parent::tearDown();

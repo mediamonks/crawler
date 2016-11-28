@@ -520,7 +520,10 @@ class Crawler implements LoggerAwareInterface
      */
     protected function shouldCrawlUrl(Url $url)
     {
-        if ($this->isUrlRejected($url) || $this->isUrlCrawled($url) || $this->isUrlQueued($url)) {
+        if ($this->isUrlRejected($url)
+            || $this->isUrlCrawled($url)
+            || $this->isUrlQueued($url)
+        ) {
             return false;
         }
 
