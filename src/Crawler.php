@@ -124,8 +124,8 @@ class Crawler implements LoggerAwareInterface
         if (isset($options['blacklist_url_matchers'])) {
             $this->setBlacklistUrlMatchers($options['blacklist_url_matchers']);
         }
-        if (isset($options['blacklist_url_matchers'])) {
-            $this->setBlacklistUrlMatchers($options['blacklist_url_matchers']);
+        if (isset($options['url_normalizers'])) {
+            $this->setUrlNormalizers($options['url_normalizers']);
         }
     }
 
@@ -519,14 +519,7 @@ class Crawler implements LoggerAwareInterface
      */
     protected function shouldCrawlUrl(Url $url)
     {
-        $urlString = (string)$url;
-        if (in_array($urlString, $this->urlsRejected)) {
-            return false;
-        }
-        if (in_array($urlString, $this->urlsCrawled)) {
-            return false;
-        }
-        if (isset($this->urlsQueued[$urlString])) {
+        if ($this->isUrlRejected($url) || $this->isUrlCrawled($url) || $this->isUrlQueued($url)) {
             return false;
         }
 
@@ -537,6 +530,33 @@ class Crawler implements LoggerAwareInterface
         }
 
         return true;
+    }
+
+    /**
+     * @param Url $url
+     * @return bool
+     */
+    protected function isUrlRejected(Url $url)
+    {
+        return in_array((string)$url, $this->urlsRejected);
+    }
+
+    /**
+     * @param Url $url
+     * @return bool
+     */
+    protected function isUrlCrawled(Url $url)
+    {
+        return in_array((string)$url, $this->urlsCrawled);
+    }
+
+    /**
+     * @param Url $url
+     * @return bool
+     */
+    protected function isUrlQueued(Url $url)
+    {
+        return isset($this->urlsQueued[(string)$url]);
     }
 
     /**
@@ -557,7 +577,7 @@ class Crawler implements LoggerAwareInterface
     /**
      * @return bool
      */
-    private function isLimitReached()
+    protected function isLimitReached()
     {
         return (!empty($this->limit) && count($this->urlsReturned) === $this->limit);
     }
