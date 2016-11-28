@@ -3,6 +3,7 @@
 namespace tests\MediaMonks\Crawler;
 
 use MediaMonks\Crawler\Crawler;
+use MediaMonks\Crawler\Exception\RequestException;
 use MediaMonks\Crawler\Url;
 use MediaMonks\Crawler\Url\Matcher\PathRegexUrlMatcher;
 use MediaMonks\Crawler\Url\Matcher\UrlMatcherInterface;
@@ -56,23 +57,25 @@ class CrawlerTest extends \PHPUnit_Framework_TestCase
 
         $crawler = new Crawler(
             null, [
-            'limit'                  => 1,
-            'stop_on_error'          => true,
-            'logger'                 => $logger,
-            'whitelist_url_matchers' => [
-                m::mock(UrlMatcherInterface::class),
-            ],
-            'blacklist_url_matchers' => [
-                m::mock(UrlMatcherInterface::class),
-            ],
-            'url_normalizers' => [
-                m::mock(Url\Normalizer\UrlNormalizerInterface::class),
+                'limit'                  => 1,
+                'stop_on_error'          => true,
+                'exception_on_error'     => true,
+                'logger'                 => $logger,
+                'whitelist_url_matchers' => [
+                    m::mock(UrlMatcherInterface::class),
+                ],
+                'blacklist_url_matchers' => [
+                    m::mock(UrlMatcherInterface::class),
+                ],
+                'url_normalizers'        => [
+                    m::mock(Url\Normalizer\UrlNormalizerInterface::class),
+                ],
             ]
-        ]
         );
 
         $this->assertEquals(1, $crawler->getLimit());
         $this->assertTrue($crawler->getStopOnError());
+        $this->assertTrue($crawler->getExceptionOnError());
         $this->assertEquals($logger, $crawler->getLogger());
         $this->assertCount(1, $crawler->getWhitelistUrlMatchers());
         $this->assertCount(1, $crawler->getBlacklistUrlMatchers());
@@ -194,13 +197,17 @@ class CrawlerTest extends \PHPUnit_Framework_TestCase
     public function test_crawl_with_normalizer()
     {
         $crawler = new Crawler($this->getDummyClient());
-        $crawler->addUrlNormalizer(new CallbackUrlNormalizer(function(Url $url) {
-            if ($url->getPath() === '/page_4.html') {
-                $url = $url->withPath('/page_3.html');
-            }
+        $crawler->addUrlNormalizer(
+            new CallbackUrlNormalizer(
+                function (Url $url) {
+                    if ($url->getPath() === '/page_4.html') {
+                        $url = $url->withPath('/page_3.html');
+                    }
 
-            return $url;
-        }));
+                    return $url;
+                }
+            )
+        );
 
         foreach ($crawler->crawl('http://my-test') as $page) {
         }
@@ -213,27 +220,65 @@ class CrawlerTest extends \PHPUnit_Framework_TestCase
         $client = m::mock(Client::class);
 
         $i = 0;
-        $client->shouldReceive('request')->andReturnUsing(function() use(&$i) {
-            $i++;
-            switch($i) {
-                case 1:
-                    $html = '<html><body><a href="/page_1.html">Page 1</a><a href="/page_2.html">Page 2</a></body></html>';
-                    break;
-                case 2:
-                    throw new \Exception('foo');
-                case 3:
-                    $html = '<html><body><a href="/page_4.html">Page 4</a><a href="mailto:foo@bar.com">Invalid</a></body></html>';
-                    break;
-                default:
-                    $html = '<html><body><a href="/page_1.html">Page 1</a><a href="http://external/">External</a></body></html>';
-                    break;
-            }
+        $client->shouldReceive('request')->andReturnUsing(
+            function () use (&$i) {
+                $i++;
+                switch ($i) {
+                    case 1:
+                        $html = '<html><body><a href="/page_1.html">Page 1</a><a href="/page_2.html">Page 2</a></body></html>';
+                        break;
+                    case 2:
+                        throw new \Exception('foo');
+                    case 3:
+                        $html = '<html><body><a href="/page_4.html">Page 4</a><a href="mailto:foo@bar.com">Invalid</a></body></html>';
+                        break;
+                    default:
+                        $html = '<html><body><a href="/page_1.html">Page 1</a><a href="http://external/">External</a></body></html>';
+                        break;
+                }
 
-            return new DomCrawler($html, 'http://my-test');
-        });
+                return new DomCrawler($html, 'http://my-test');
+            }
+        );
 
         $crawler = new Crawler($client);
         $crawler->setStopOnError(true);
+
+        foreach ($crawler->crawl('http://my-test') as $page) {
+        }
+
+        $this->assertCount(1, $crawler->getUrlsCrawled());
+    }
+
+    public function test_crawler_exception_on_error()
+    {
+        $this->setExpectedException(RequestException::class);
+        $client = m::mock(Client::class);
+
+        $i = 0;
+        $client->shouldReceive('request')->andReturnUsing(
+            function () use (&$i) {
+                $i++;
+                switch ($i) {
+                    case 1:
+                        $html = '<html><body><a href="/page_1.html">Page 1</a><a href="/page_2.html">Page 2</a></body></html>';
+                        break;
+                    case 2:
+                        throw new \Exception('foo');
+                    case 3:
+                        $html = '<html><body><a href="/page_4.html">Page 4</a><a href="mailto:foo@bar.com">Invalid</a></body></html>';
+                        break;
+                    default:
+                        $html = '<html><body><a href="/page_1.html">Page 1</a><a href="http://external/">External</a></body></html>';
+                        break;
+                }
+
+                return new DomCrawler($html, 'http://my-test');
+            }
+        );
+
+        $crawler = new Crawler($client);
+        $crawler->setExceptionOnError(true);
 
         foreach ($crawler->crawl('http://my-test') as $page) {
         }
@@ -246,24 +291,26 @@ class CrawlerTest extends \PHPUnit_Framework_TestCase
         $client = m::mock(Client::class);
 
         $i = 0;
-        $client->shouldReceive('request')->andReturnUsing(function() use(&$i) {
-            $i++;
-            switch($i) {
-                case 1:
-                    $html = '<html><body><a href="/page_1.html">Page 1</a><a href="/page_2.html">Page 2</a></body></html>';
-                    break;
-                case 2:
-                    throw new \Exception('foo');
-                case 3:
-                    $html = '<html><body><a href="/page_4.html">Page 4</a><a href="mailto:foo@bar.com">Invalid</a></body></html>';
-                    break;
-                default:
-                    $html = '<html><body><a href="/page_1.html">Page 1</a><a href="http://external/">External</a></body></html>';
-                    break;
-            }
+        $client->shouldReceive('request')->andReturnUsing(
+            function () use (&$i) {
+                $i++;
+                switch ($i) {
+                    case 1:
+                        $html = '<html><body><a href="/page_1.html">Page 1</a><a href="/page_2.html">Page 2</a></body></html>';
+                        break;
+                    case 2:
+                        throw new \Exception('foo');
+                    case 3:
+                        $html = '<html><body><a href="/page_4.html">Page 4</a><a href="mailto:foo@bar.com">Invalid</a></body></html>';
+                        break;
+                    default:
+                        $html = '<html><body><a href="/page_1.html">Page 1</a><a href="http://external/">External</a></body></html>';
+                        break;
+                }
 
-            return new DomCrawler($html, 'http://my-test');
-        });
+                return new DomCrawler($html, 'http://my-test');
+            }
+        );
 
         $crawler = new Crawler($client);
 
@@ -281,25 +328,27 @@ class CrawlerTest extends \PHPUnit_Framework_TestCase
         $client = m::mock(Client::class);
 
         $i = 0;
-        $client->shouldReceive('request')->andReturnUsing(function() use(&$i) {
-            $i++;
-            switch($i) {
-                case 1:
-                    $html = '<html><body><a href="/page_1.html">Page 1</a><a href="/page_2.html">Page 2</a></body></html>';
-                    break;
-                case 2:
-                    $html = '<html><body><a href="/page_3.html">Page 3</a><a href="http://external/">External</a></body></html>';
-                    break;
-                case 3:
-                    $html = '<html><body><a href="/page_4.html">Page 4</a><a href="mailto:foo@bar.com">Invalid</a></body></html>';
-                    break;
-                default:
-                    $html = '<html><body><a href="/page_1.html">Page 1</a><a href="http://external/">External</a></body></html>';
-                    break;
-            }
+        $client->shouldReceive('request')->andReturnUsing(
+            function () use (&$i) {
+                $i++;
+                switch ($i) {
+                    case 1:
+                        $html = '<html><body><a href="/page_1.html">Page 1</a><a href="/page_2.html">Page 2</a></body></html>';
+                        break;
+                    case 2:
+                        $html = '<html><body><a href="/page_3.html">Page 3</a><a href="http://external/">External</a></body></html>';
+                        break;
+                    case 3:
+                        $html = '<html><body><a href="/page_4.html">Page 4</a><a href="mailto:foo@bar.com">Invalid</a></body></html>';
+                        break;
+                    default:
+                        $html = '<html><body><a href="/page_1.html">Page 1</a><a href="http://external/">External</a></body></html>';
+                        break;
+                }
 
-            return new DomCrawler($html, 'http://my-test');
-        });
+                return new DomCrawler($html, 'http://my-test');
+            }
+        );
 
         return $client;
     }

@@ -2,6 +2,7 @@
 
 namespace MediaMonks\Crawler;
 
+use MediaMonks\Crawler\Exception\RequestException;
 use MediaMonks\Crawler\Url\Matcher\UrlMatcherInterface;
 use MediaMonks\Crawler\Url\Normalizer\UrlNormalizerInterface;
 use Symfony\Component\BrowserKit\Client;
@@ -26,6 +27,11 @@ class Crawler implements LoggerAwareInterface
      * @var bool
      */
     private $stopOnError = false;
+
+    /**
+     * @var bool
+     */
+    private $exceptionOnError = false;
 
     /**
      * @var UrlMatcherInterface[]
@@ -115,6 +121,9 @@ class Crawler implements LoggerAwareInterface
         if (isset($options['stop_on_error'])) {
             $this->setStopOnError($options['stop_on_error']);
         }
+        if (isset($options['exception_on_error'])) {
+            $this->setExceptionOnError($options['exception_on_error']);
+        }
         if (isset($options['logger'])) {
             $this->setLogger($options['logger']);
         }
@@ -158,11 +167,30 @@ class Crawler implements LoggerAwareInterface
 
     /**
      * @param boolean $stopOnError
-     * @return Crawler
+     * @return $this
      */
     public function setStopOnError($stopOnError)
     {
         $this->stopOnError = $stopOnError;
+
+        return $this;
+    }
+
+    /**
+     * @return boolean
+     */
+    public function getExceptionOnError()
+    {
+        return $this->exceptionOnError;
+    }
+
+    /**
+     * @param boolean $exceptionOnError
+     * @return $this
+     */
+    public function setExceptionOnError($exceptionOnError)
+    {
+        $this->exceptionOnError = $exceptionOnError;
 
         return $this;
     }
@@ -384,6 +412,7 @@ class Crawler implements LoggerAwareInterface
     /**
      * @param string $url
      * @return \Generator
+     * @throws RequestException
      */
     public function crawl($url)
     {
@@ -400,6 +429,9 @@ class Crawler implements LoggerAwareInterface
 
                 if ($this->getStopOnError()) {
                     return;
+                }
+                if ($this->getExceptionOnError()) {
+                    throw new RequestException($e->getMessage(), $e->getCode(), $e);
                 }
 
                 continue;
