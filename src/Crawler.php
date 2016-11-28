@@ -387,8 +387,7 @@ class Crawler implements LoggerAwareInterface
      */
     public function crawl($url)
     {
-        $url = $this->createHttpUrlString($url);
-        $this->reset($url);
+        $this->reset($this->createHttpUrlString($url));
 
         while (count($this->urlsQueued) > 0) {
 
@@ -596,7 +595,7 @@ class Crawler implements LoggerAwareInterface
     }
 
     /**
-     * @param $url
+     * @param string $url
      * @return DomCrawler
      */
     protected function requestPage($url)
