@@ -51,37 +51,6 @@ class CrawlerTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals($logger, $crawler->getLogger());
     }
 
-    public function test_options()
-    {
-        $logger = m::mock(NullLogger::class);
-
-        $crawler = new Crawler(
-            null, [
-                'limit'                  => 1,
-                'stop_on_error'          => true,
-                'exception_on_error'     => true,
-                'logger'                 => $logger,
-                'whitelist_url_matchers' => [
-                    m::mock(UrlMatcherInterface::class),
-                ],
-                'blacklist_url_matchers' => [
-                    m::mock(UrlMatcherInterface::class),
-                ],
-                'url_normalizers'        => [
-                    m::mock(Url\Normalizer\UrlNormalizerInterface::class),
-                ],
-            ]
-        );
-
-        $this->assertEquals(1, $crawler->getLimit());
-        $this->assertTrue($crawler->getStopOnError());
-        $this->assertTrue($crawler->getExceptionOnError());
-        $this->assertEquals($logger, $crawler->getLogger());
-        $this->assertCount(1, $crawler->getWhitelistUrlMatchers());
-        $this->assertCount(1, $crawler->getBlacklistUrlMatchers());
-        $this->assertCount(1, $crawler->getUrlNormalizers());
-    }
-
     public function test_clear_matchers()
     {
         $matcher = m::mock(UrlMatcherInterface::class);

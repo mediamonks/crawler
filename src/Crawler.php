@@ -80,16 +80,14 @@ class Crawler implements LoggerAwareInterface
 
     /**
      * @param Client $client
-     * @param array $options
      */
-    public function __construct(Client $client = null, array $options = [])
+    public function __construct(Client $client = null)
     {
         if (empty($client)) {
             $client = new \Goutte\Client();
         }
 
         $this->setClient($client);
-        $this->setOptions($options);
 
         return $this;
     }
@@ -108,34 +106,6 @@ class Crawler implements LoggerAwareInterface
     public function getClient()
     {
         return $this->client;
-    }
-
-    /**
-     * @param array $options
-     */
-    public function setOptions(array $options)
-    {
-        if (isset($options['limit'])) {
-            $this->setLimit($options['limit']);
-        }
-        if (isset($options['stop_on_error'])) {
-            $this->setStopOnError($options['stop_on_error']);
-        }
-        if (isset($options['exception_on_error'])) {
-            $this->setExceptionOnError($options['exception_on_error']);
-        }
-        if (isset($options['logger'])) {
-            $this->setLogger($options['logger']);
-        }
-        if (isset($options['whitelist_url_matchers'])) {
-            $this->setWhitelistUrlMatchers($options['whitelist_url_matchers']);
-        }
-        if (isset($options['blacklist_url_matchers'])) {
-            $this->setBlacklistUrlMatchers($options['blacklist_url_matchers']);
-        }
-        if (isset($options['url_normalizers'])) {
-            $this->setUrlNormalizers($options['url_normalizers']);
-        }
     }
 
     /**
