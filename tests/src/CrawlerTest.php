@@ -65,6 +65,9 @@ class CrawlerTest extends \PHPUnit_Framework_TestCase
             'blacklist_url_matchers' => [
                 m::mock(UrlMatcherInterface::class),
             ],
+            'url_normalizers' => [
+                m::mock(Url\Normalizer\UrlNormalizerInterface::class),
+            ]
         ]
         );
 
@@ -73,6 +76,7 @@ class CrawlerTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals($logger, $crawler->getLogger());
         $this->assertCount(1, $crawler->getWhitelistUrlMatchers());
         $this->assertCount(1, $crawler->getBlacklistUrlMatchers());
+        $this->assertCount(1, $crawler->getUrlNormalizers());
     }
 
     public function test_clear_matchers()
