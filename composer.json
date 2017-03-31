@@ -26,7 +26,8 @@
     "php": "^5.5|~7.0",
     "symfony/dom-crawler": "^2.8|^3.0",
     "fabpot/goutte": "^3.0",
-    "league/uri": "^4.2"
+    "league/uri": "^4.2",
+    "psr/log": "^1.0"
   },
   "require-dev": {
     "codeclimate/php-test-reporter": "dev-master@dev",
