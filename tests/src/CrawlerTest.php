@@ -104,7 +104,7 @@ class CrawlerTest extends \PHPUnit_Framework_TestCase
     {
         $domCrawler = new DomCrawler('<html></html>');
 
-        $client = m::mock(Client::class);
+        $client = $this->getClient();
         $client->shouldReceive('request')->once()->andReturn($domCrawler);
 
         $crawler = new Crawler($client);
@@ -186,7 +186,7 @@ class CrawlerTest extends \PHPUnit_Framework_TestCase
 
     public function test_crawler_stop_on_error()
     {
-        $client = m::mock(Client::class);
+        $client = $this->getClient();
 
         $i = 0;
         $client->shouldReceive('request')->andReturnUsing(
@@ -222,7 +222,7 @@ class CrawlerTest extends \PHPUnit_Framework_TestCase
     public function test_crawler_exception_on_error()
     {
         $this->setExpectedException(RequestException::class);
-        $client = m::mock(Client::class);
+        $client = $this->getClient();
 
         $i = 0;
         $client->shouldReceive('request')->andReturnUsing(
@@ -257,7 +257,7 @@ class CrawlerTest extends \PHPUnit_Framework_TestCase
 
     public function test_crawler_does_not_stop_on_error()
     {
-        $client = m::mock(Client::class);
+        $client = $this->getClient();
 
         $i = 0;
         $client->shouldReceive('request')->andReturnUsing(
@@ -294,7 +294,7 @@ class CrawlerTest extends \PHPUnit_Framework_TestCase
      */
     protected function getDummyClient()
     {
-        $client = m::mock(Client::class);
+        $client = $this->getClient();
 
         $i = 0;
         $client->shouldReceive('request')->andReturnUsing(
@@ -353,5 +353,16 @@ class CrawlerTest extends \PHPUnit_Framework_TestCase
         parent::tearDown();
 
         m::close();
+    }
+
+    /**
+     * @return \Mockery\MockInterface
+     */
+    protected function getClient()
+    {
+        $client = m::mock(Client::class);
+        $client->shouldReceive('getResponse')->andReturnNull();
+
+        return $client;
     }
 }

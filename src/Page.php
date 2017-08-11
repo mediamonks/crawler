@@ -2,6 +2,7 @@
 
 namespace MediaMonks\Crawler;
 
+use Symfony\Component\BrowserKit\Response;
 use Symfony\Component\DomCrawler\Crawler as DomCrawler;
 
 class Page
@@ -17,13 +18,20 @@ class Page
     private $crawler;
 
     /**
+     * @var Response
+     */
+    private $response;
+
+    /**
      * @param Url $url
      * @param DomCrawler $crawler
+     * @param $response
      */
-    public function __construct(Url $url, DomCrawler $crawler)
+    public function __construct(Url $url, DomCrawler $crawler, Response $response = null)
     {
         $this->url = $url;
         $this->crawler = $crawler;
+        $this->response = $response;
     }
 
     /**
@@ -40,5 +48,13 @@ class Page
     public function getCrawler()
     {
         return $this->crawler;
+    }
+
+    /**
+     * @return Response
+     */
+    public function getResponse()
+    {
+        return $this->response;
     }
 }

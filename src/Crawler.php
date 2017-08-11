@@ -415,7 +415,7 @@ class Crawler implements LoggerAwareInterface
 
                 $this->urlsReturned[] = (string)$url;
 
-                yield new Page($url, $crawler);
+                yield new Page($url, $crawler, $this->client->getResponse());
             }
 
             if ($this->isLimitReached()) {
