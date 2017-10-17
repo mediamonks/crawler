@@ -11,6 +11,7 @@ use MediaMonks\Crawler\Url\Normalizer\CallbackUrlNormalizer;
 use Mockery as m;
 use Psr\Log\NullLogger;
 use Symfony\Component\BrowserKit\Client;
+use Symfony\Component\BrowserKit\Request;
 use Symfony\Component\DomCrawler\Crawler as DomCrawler;
 
 class CrawlerTest extends \PHPUnit_Framework_TestCase
@@ -106,6 +107,7 @@ class CrawlerTest extends \PHPUnit_Framework_TestCase
 
         $client = $this->getClient();
         $client->shouldReceive('request')->once()->andReturn($domCrawler);
+        $client->shouldReceive('getInternalRequest')->once()->andReturn(null);
 
         $crawler = new Crawler($client);
 
@@ -209,6 +211,7 @@ class CrawlerTest extends \PHPUnit_Framework_TestCase
                 return new DomCrawler($html, 'http://my-test');
             }
         );
+        $client->shouldReceive('getInternalRequest')->once()->andReturn(null);
 
         $crawler = new Crawler($client);
         $crawler->setStopOnError(true);
@@ -280,6 +283,7 @@ class CrawlerTest extends \PHPUnit_Framework_TestCase
                 return new DomCrawler($html, 'http://my-test');
             }
         );
+        $client->shouldReceive('getInternalRequest')->andReturn(null);
 
         $crawler = new Crawler($client);
 
@@ -318,6 +322,7 @@ class CrawlerTest extends \PHPUnit_Framework_TestCase
                 return new DomCrawler($html, 'http://my-test');
             }
         );
+        $client->shouldReceive('getInternalRequest')->andReturn(null);
 
         return $client;
     }
@@ -346,6 +351,23 @@ class CrawlerTest extends \PHPUnit_Framework_TestCase
 
         $addToQueue->invokeArgs($client, [Url::createFromString('http://my-website/bar')]);
         $this->assertFalse($shouldCrawlUrl->invokeArgs($client, [Url::createFromString('http://my-website/bar')]));
+    }
+
+    public function test_update_url()
+    {
+        $request = m::mock(Request::class);
+        $request->shouldReceive('getUri')->andReturn('http://redirected-url');
+
+        $domCrawler = new DomCrawler('<html></html>');
+
+        $client = $this->getClient();
+        $client->shouldReceive('request')->once()->andReturn($domCrawler);
+        $client->shouldReceive('getInternalRequest')->andReturn($request);
+
+        $client = new Crawler($client);
+        foreach ($client->crawl('http://original-url') as $page) {
+            $this->assertEquals('http://redirected-url', $page->getUrl()->__toString());
+        }
     }
 
     protected function tearDown()
