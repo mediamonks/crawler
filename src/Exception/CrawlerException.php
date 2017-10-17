@@ -2,6 +2,6 @@
 
 namespace MediaMonks\Crawler\Exception;
 
-class RequestException extends CrawlerException
+class CrawlerException extends \Exception
 {
 }

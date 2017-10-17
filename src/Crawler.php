@@ -3,6 +3,7 @@
 namespace MediaMonks\Crawler;
 
 use MediaMonks\Crawler\Exception\RequestException;
+use MediaMonks\Crawler\Exception\UnsupportedUrlException;
 use MediaMonks\Crawler\Url\Matcher\UrlMatcherInterface;
 use MediaMonks\Crawler\Url\Normalizer\UrlNormalizerInterface;
 use Symfony\Component\BrowserKit\Client;
@@ -359,12 +360,22 @@ class Crawler implements LoggerAwareInterface
     }
 
     /**
-     * @param string $url
+     * @param $url
      * @return Url
+     * @throws \Exception
      */
     protected function createHttpUrlString($url)
     {
-        return Url::createFromString($url);
+        try {
+            return Url::createFromString($url);
+        }
+        catch (\Exception $e) {
+            $this->getLogger()->warning(
+                sprintf('Url %s could not be converted to an object: %s', $url, $e->getMessage())
+            );
+
+            throw new UnsupportedUrlException($url);
+        }
     }
 
     /**
@@ -455,9 +466,6 @@ class Crawler implements LoggerAwareInterface
                     $this->addUrlToQueue($url);
                 }
             } catch (\Exception $e) {
-                $this->getLogger()->warning(
-                    sprintf('Url %s could not be converted to an object: %s', $url, $e->getMessage())
-                );
                 $this->urlsRejected[] = $url;
             }
         }
