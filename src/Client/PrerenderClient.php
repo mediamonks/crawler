@@ -7,7 +7,7 @@ use Symfony\Component\BrowserKit\History;
 use Symfony\Component\BrowserKit\CookieJar;
 use Symfony\Component\BrowserKit\Request;
 
-class PrerenderClient extends BaseClient
+class PrerenderClient extends BaseClient implements CrawlerClientInterface
 {
     /**
      * @var string

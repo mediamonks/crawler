@@ -2,6 +2,8 @@
 
 namespace MediaMonks\Crawler;
 
+use MediaMonks\Crawler\Client\CrawlerClientInterface;
+use MediaMonks\Crawler\Client\GoutteClient;
 use MediaMonks\Crawler\Exception\RequestException;
 use MediaMonks\Crawler\Exception\UnsupportedUrlException;
 use MediaMonks\Crawler\Url\Matcher\UrlMatcherInterface;
@@ -80,12 +82,12 @@ class Crawler implements LoggerAwareInterface
     private $logger = null;
 
     /**
-     * @param Client $client
+     * @param CrawlerClientInterface $client
      */
-    public function __construct(Client $client = null)
+    public function __construct(CrawlerClientInterface $client = null)
     {
         if (empty($client)) {
-            $client = new \Goutte\Client();
+            $client = new GoutteClient();
         }
 
         $this->setClient($client);
@@ -94,9 +96,9 @@ class Crawler implements LoggerAwareInterface
     }
 
     /**
-     * @param Client $client
+     * @param CrawlerClientInterface $client
      */
-    public function setClient(Client $client)
+    public function setClient(CrawlerClientInterface $client)
     {
         $this->client = $client;
     }

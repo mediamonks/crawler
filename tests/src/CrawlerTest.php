@@ -2,6 +2,8 @@
 
 namespace tests\MediaMonks\Crawler;
 
+use MediaMonks\Crawler\Client\CrawlerClientInterface;
+use MediaMonks\Crawler\Client\GoutteClient;
 use MediaMonks\Crawler\Crawler;
 use MediaMonks\Crawler\Exception\RequestException;
 use MediaMonks\Crawler\Url;
@@ -36,7 +38,7 @@ class CrawlerTest extends \PHPUnit_Framework_TestCase
     {
         $crawler = new Crawler();
 
-        $client = new \Goutte\Client();
+        $client = new GoutteClient();
         $crawler->setClient($client);
         $this->assertEquals($client, $crawler->getClient());
 
@@ -382,7 +384,7 @@ class CrawlerTest extends \PHPUnit_Framework_TestCase
      */
     protected function getClient()
     {
-        $client = m::mock(Client::class);
+        $client = m::mock(CrawlerClientInterface::class);
         $client->shouldReceive('getResponse')->andReturnNull();
 
         return $client;
