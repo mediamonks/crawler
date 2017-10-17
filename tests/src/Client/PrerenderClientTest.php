@@ -24,7 +24,7 @@ class PrerenderClientTest extends \PHPUnit_Framework_TestCase
         $prerenderUrl = 'http://my-prerender-server/';
         $websiteUrl = 'http://my-website/';
 
-        $request = new Request($websiteUrl, 'GET');
+        $request = new Request($prerenderUrl.$websiteUrl, 'GET');
 
         $rp = new \ReflectionProperty(PrerenderClient::class, 'request');
         $rp->setAccessible(true);
