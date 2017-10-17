@@ -2,12 +2,11 @@
 
 namespace MediaMonks\Crawler\Client;
 
-use Goutte\Client as BaseClient;
 use Symfony\Component\BrowserKit\History;
 use Symfony\Component\BrowserKit\CookieJar;
 use Symfony\Component\BrowserKit\Request;
 
-class PrerenderClient extends BaseClient implements CrawlerClientInterface
+class PrerenderClient extends GoutteClient
 {
     /**
      * @var string
