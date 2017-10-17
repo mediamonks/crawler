@@ -5,6 +5,7 @@ namespace MediaMonks\Crawler\Client;
 use Goutte\Client as BaseClient;
 use Symfony\Component\BrowserKit\History;
 use Symfony\Component\BrowserKit\CookieJar;
+use Symfony\Component\BrowserKit\Request;
 
 class PrerenderClient extends BaseClient
 {
@@ -33,5 +34,29 @@ class PrerenderClient extends BaseClient
     protected function getAbsoluteUri($uri)
     {
         return $this->prerenderUrl.parent::getAbsoluteUri($uri);
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function getRequest()
+    {
+        $request = parent::getRequest();
+        if (!empty($request)) {
+            return new Request($this->correctUrl($request->getUri()),
+                $request->getMethod(), $request->getParameters(),
+                $request->getFiles(), $request->getCookies(), $request->getServer(),
+                $request->getContent());
+        }
+    }
+
+    /**
+     * @param $url
+     *
+     * @return string
+     */
+    protected function correctUrl($url)
+    {
+        return str_replace($this->prerenderUrl, '', $url);
     }
 }

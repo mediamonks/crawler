@@ -107,7 +107,7 @@ class CrawlerTest extends \PHPUnit_Framework_TestCase
 
         $client = $this->getClient();
         $client->shouldReceive('request')->once()->andReturn($domCrawler);
-        $client->shouldReceive('getInternalRequest')->once()->andReturn(null);
+        $client->shouldReceive('getRequest')->once()->andReturn(null);
 
         $crawler = new Crawler($client);
 
@@ -211,7 +211,7 @@ class CrawlerTest extends \PHPUnit_Framework_TestCase
                 return new DomCrawler($html, 'http://my-test');
             }
         );
-        $client->shouldReceive('getInternalRequest')->once()->andReturn(null);
+        $client->shouldReceive('getRequest')->once()->andReturn(null);
 
         $crawler = new Crawler($client);
         $crawler->setStopOnError(true);
@@ -283,7 +283,7 @@ class CrawlerTest extends \PHPUnit_Framework_TestCase
                 return new DomCrawler($html, 'http://my-test');
             }
         );
-        $client->shouldReceive('getInternalRequest')->andReturn(null);
+        $client->shouldReceive('getRequest')->andReturn(null);
 
         $crawler = new Crawler($client);
 
@@ -322,7 +322,7 @@ class CrawlerTest extends \PHPUnit_Framework_TestCase
                 return new DomCrawler($html, 'http://my-test');
             }
         );
-        $client->shouldReceive('getInternalRequest')->andReturn(null);
+        $client->shouldReceive('getRequest')->andReturn(null);
 
         return $client;
     }
@@ -362,7 +362,7 @@ class CrawlerTest extends \PHPUnit_Framework_TestCase
 
         $client = $this->getClient();
         $client->shouldReceive('request')->once()->andReturn($domCrawler);
-        $client->shouldReceive('getInternalRequest')->andReturn($request);
+        $client->shouldReceive('getRequest')->andReturn($request);
 
         $client = new Crawler($client);
         foreach ($client->crawl('http://original-url') as $page) {

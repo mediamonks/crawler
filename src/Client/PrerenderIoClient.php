@@ -7,7 +7,7 @@ use Symfony\Component\BrowserKit\CookieJar;
 
 class PrerenderIoClient extends PrerenderClient
 {
-    const URL = 'http://service.prerender.io/';
+    const URL = 'https://service.prerender.io/';
 
     const HEADER_TOKEN = 'HTTP_X-Prerender-Token';
     const HEADER_USER_AGENT = 'HTTP_USER_AGENT';

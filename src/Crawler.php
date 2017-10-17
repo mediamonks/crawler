@@ -405,7 +405,7 @@ class Crawler implements LoggerAwareInterface
 
             try {
                 $crawler = $this->requestPage((string)$url);
-                $url = $this->updateUrl($url);
+                $url = $this->updateResolvedUrl($url);
             } catch (\Exception $e) {
                 $this->getLogger()->error(sprintf('Error requesting page %s: %s', $url, $e->getMessage()));
 
@@ -442,11 +442,11 @@ class Crawler implements LoggerAwareInterface
      * @param Url $url
      * @return Url
      */
-    protected function updateUrl(Url $url)
+    protected function updateResolvedUrl(Url $url)
     {
-        $internalRequest = $this->client->getInternalRequest();
-        if (!empty($internalRequest)) {
-            $url = $this->createHttpUrlString($this->client->getInternalRequest()->getUri());
+        $request = $this->client->getRequest();
+        if (!empty($request)) {
+            $url = $this->createHttpUrlString($request->getUri());
         }
 
         return $url;
