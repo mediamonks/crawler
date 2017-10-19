@@ -22,4 +22,11 @@ class PrerenderIoClientTest extends \PHPUnit_Framework_TestCase
         );
         $this->assertEquals($token, $client->getServerParameter(PrerenderIoClient::HEADER_TOKEN));
     }
+
+    public function test_getRequest()
+    {
+        $token = 'my-prerender.io-token';
+        $client = new PrerenderIoClient($token);
+        $this->assertNull($client->getRequest());
+    }
 }

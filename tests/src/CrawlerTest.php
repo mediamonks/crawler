@@ -351,6 +351,29 @@ class CrawlerTest extends \PHPUnit_Framework_TestCase
         $this->assertFalse($shouldCrawlUrl->invokeArgs($client, [Url::createFromString('http://other-host')]));
     }
 
+    public function test_add_rejected_url()
+    {
+        $addRejectedUrl = get_non_public_method(Crawler::class, 'addRejectedUrl');
+
+        $client = new Crawler();
+        $addRejectedUrl->invokeArgs($client, [Url::createFromString('http://my-website')]);
+        $this->assertEquals(1, count($client->getUrlsRejected()));
+
+        $addRejectedUrl->invokeArgs($client, ['http://my-website/foo']);
+        $this->assertEquals(2, count($client->getUrlsRejected()));
+    }
+
+    public function test_add_rejected_url_invalid()
+    {
+        $this->setExpectedException(\InvalidArgumentException::class);
+
+        $addRejectedUrl = get_non_public_method(Crawler::class, 'addRejectedUrl');
+
+        $client = new Crawler();
+        $addRejectedUrl->invokeArgs($client, [new \stdClass()]);
+        $this->assertEquals(0, count($client->getUrlsRejected()));
+    }
+
     public function test_update_url()
     {
         $request = m::mock(Request::class);
