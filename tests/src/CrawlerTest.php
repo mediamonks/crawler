@@ -292,7 +292,7 @@ class CrawlerTest extends \PHPUnit_Framework_TestCase
         foreach ($crawler->crawl('http://my-test') as $page) {
         }
 
-        $this->assertCount(4, $crawler->getUrlsCrawled());
+        $this->assertCount(3, $crawler->getUrlsCrawled());
     }
 
     /**

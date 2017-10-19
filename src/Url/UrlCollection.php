@@ -19,7 +19,7 @@ class UrlCollection implements \Countable
     public function push(Url $url)
     {
         if (!$this->contains($url)) {
-            $this->urls = [$url->__toString() => $url] + $this->urls;
+            $this->urls[$url->__toString()] = $url;
         }
     }
 
