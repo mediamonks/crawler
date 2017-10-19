@@ -11,7 +11,9 @@
     "prerender",
     "prerender.io",
     "search",
-    "index"
+    "index",
+    "goutte",
+    "domcrawler"
   ],
   "homepage": "https://www.mediamonks.com/",
   "license": "MIT",

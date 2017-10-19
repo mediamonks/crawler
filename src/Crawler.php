@@ -401,10 +401,9 @@ class Crawler implements LoggerAwareInterface
     {
         $this->reset($this->createHttpUrlString($url));
 
-        while (count($this->urlsQueued) > 0) {
+        while ($url = $this->urlsQueued->pop()) {
 
             try {
-                $url = $this->urlsQueued->pop();
                 $crawler = $this->requestPage($url);
                 $url = $this->updateResolvedUrl($url);
             } catch (\Exception $e) {

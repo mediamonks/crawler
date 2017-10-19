@@ -24,16 +24,17 @@ class UrlCollection implements \Countable
     }
 
     /**
-     * @return Url
+     * @return Url|false
      * @throws EmptyCollectionException
      */
     public function pop()
     {
-        if ($this->count() === 0) {
-            throw new EmptyCollectionException();
+        $url = array_shift($this->urls);
+        if (empty($url)) {
+            return false;
         }
 
-        return array_shift($this->urls);
+        return $url;
     }
 
     /**
