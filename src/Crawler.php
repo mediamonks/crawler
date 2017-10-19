@@ -8,6 +8,7 @@ use MediaMonks\Crawler\Exception\RequestException;
 use MediaMonks\Crawler\Exception\UnsupportedUrlException;
 use MediaMonks\Crawler\Url\Matcher\UrlMatcherInterface;
 use MediaMonks\Crawler\Url\Normalizer\UrlNormalizerInterface;
+use MediaMonks\Crawler\Url\UrlCollection;
 use Symfony\Component\BrowserKit\Client;
 use Symfony\Component\DomCrawler\Crawler as DomCrawler;
 use Psr\Log\LoggerAwareInterface;
@@ -57,24 +58,24 @@ class Crawler implements LoggerAwareInterface
     private $baseUrl;
 
     /**
-     * @var array
+     * @var UrlCollection
      */
-    private $urlsCrawled = [];
+    private $urlsCrawled;
 
     /**
-     * @var array
+     * @var UrlCollection
      */
-    private $urlsQueued = [];
+    private $urlsQueued;
+
+    /**
+     * @var UrlCollection
+     */
+    private $urlsReturned;
 
     /**
      * @var array
      */
     private $urlsRejected = [];
-
-    /**
-     * @var array
-     */
-    private $urlsReturned = [];
 
     /**
      * @var LoggerInterface
@@ -91,6 +92,10 @@ class Crawler implements LoggerAwareInterface
         }
 
         $this->setClient($client);
+
+        $this->urlsCrawled = new UrlCollection();
+        $this->urlsQueued = new UrlCollection();
+        $this->urlsReturned = new UrlCollection();
 
         return $this;
     }
@@ -173,7 +178,7 @@ class Crawler implements LoggerAwareInterface
      */
     public function getUrlsCrawled()
     {
-        return $this->urlsCrawled;
+        return $this->urlsCrawled->toArray();
     }
 
     /**
@@ -181,7 +186,15 @@ class Crawler implements LoggerAwareInterface
      */
     public function getUrlsQueued()
     {
-        return $this->urlsQueued;
+        return $this->urlsQueued->toArray();
+    }
+
+    /**
+     * @return array
+     */
+    public function getUrlsReturned()
+    {
+        return $this->urlsReturned->toArray();
     }
 
     /**
@@ -190,14 +203,6 @@ class Crawler implements LoggerAwareInterface
     public function getUrlsRejected()
     {
         return $this->urlsRejected;
-    }
-
-    /**
-     * @return array
-     */
-    public function getUrlsReturned()
-    {
-        return $this->urlsReturned;
     }
 
     /**
@@ -258,7 +263,7 @@ class Crawler implements LoggerAwareInterface
     }
 
     /**
-     * @return Url\Matcher\UrlMatcherInterface[]
+     * @return UrlMatcherInterface[]
      */
     public function getBlacklistUrlMatchers()
     {
@@ -354,14 +359,6 @@ class Crawler implements LoggerAwareInterface
     }
 
     /**
-     * @param Url $url
-     */
-    protected function addUrlToQueue(Url $url)
-    {
-        $this->urlsQueued[(string)$url] = $url;
-    }
-
-    /**
      * @param $url
      * @return Url
      * @throws \Exception
@@ -369,7 +366,7 @@ class Crawler implements LoggerAwareInterface
     protected function createHttpUrlString($url)
     {
         try {
-            return Url::createFromString($url);
+            return $this->normalizeUrl(Url::createFromString($url));
         }
         catch (\Exception $e) {
             $this->getLogger()->warning(
@@ -386,10 +383,13 @@ class Crawler implements LoggerAwareInterface
     protected function reset(Url $url)
     {
         $this->baseUrl = $url;
-        $this->urlsCrawled = [];
-        $this->urlsQueued = [];
 
-        $this->addUrlToQueue($url);
+        $this->urlsCrawled->reset();
+        $this->urlsQueued->reset();
+        $this->urlsReturned->reset();
+        $this->urlsRejected = [];
+
+        $this->urlsQueued->push($url);
     }
 
     /**
@@ -403,10 +403,9 @@ class Crawler implements LoggerAwareInterface
 
         while (count($this->urlsQueued) > 0) {
 
-            $url = array_shift($this->urlsQueued);
-
             try {
-                $crawler = $this->requestPage((string)$url);
+                $url = $this->urlsQueued->pop();
+                $crawler = $this->requestPage($url);
                 $url = $this->updateResolvedUrl($url);
             } catch (\Exception $e) {
                 $this->getLogger()->error(sprintf('Error requesting page %s: %s', $url, $e->getMessage()));
@@ -421,13 +420,12 @@ class Crawler implements LoggerAwareInterface
                 continue;
             }
 
-            $this->urlsCrawled[] = (string)$url;
+            $this->urlsCrawled->push($url);
             $this->updateQueue($crawler);
 
             if ($this->shouldReturnUrl($url)) {
                 $this->getLogger()->debug(sprintf('Return url "%s"', $url));
-
-                $this->urlsReturned[] = (string)$url;
+                $this->urlsReturned->push($url);
 
                 yield new Page($url, $crawler, $this->client->getResponse());
             }
@@ -462,13 +460,13 @@ class Crawler implements LoggerAwareInterface
         foreach ($this->extractUrlsFromCrawler($crawler) as $url) {
             $this->getLogger()->debug(sprintf('Found url %s in page', $url));
             try {
-                $url = $this->normalizeUrl($this->createHttpUrlString($url));
+                $url = $this->createHttpUrlString($url);
 
                 if ($this->shouldCrawlUrl($url)) {
-                    $this->addUrlToQueue($url);
+                    $this->urlsQueued->push($url);
                 }
             } catch (\Exception $e) {
-                $this->urlsRejected[] = $url;
+                $this->addRejectedUrl($url);
             }
         }
     }
@@ -494,14 +492,14 @@ class Crawler implements LoggerAwareInterface
     {
         if (!empty($this->whitelistUrlMatchers)) {
             if (!$this->isUrlWhitelisted($url)) {
-                $this->getLogger()->info(sprintf('Skipped "%s" because it is not whitelisted', $url));
+                $this->getLogger()->info(sprintf('Skipping "%s" because it is not whitelisted', $url));
 
                 return false;
             }
         }
 
         if ($this->isUrlBlacklisted($url)) {
-            $this->getLogger()->info(sprintf('Skipped "%s" because it is blacklisted', $url));
+            $this->getLogger()->info(sprintf('Skipping "%s" because it is blacklisted', $url));
 
             return false;
         }
@@ -545,15 +543,12 @@ class Crawler implements LoggerAwareInterface
      */
     protected function shouldCrawlUrl(Url $url)
     {
-        if ($this->isUrlRejected($url)
-            || $this->isUrlCrawled($url)
-            || $this->isUrlQueued($url)
-        ) {
+        if ($this->urlsCrawled->contains($url) || $this->urlsQueued->contains($url)) {
             return false;
         }
 
         if (!$this->isUrlPartOfBaseUrl($url)) {
-            $this->urlsRejected[] = (string)$url;
+            $this->addRejectedUrl($url);
 
             return false;
         }
@@ -562,30 +557,18 @@ class Crawler implements LoggerAwareInterface
     }
 
     /**
-     * @param Url $url
-     * @return bool
+     * @param $url
      */
-    protected function isUrlRejected(Url $url)
+    protected function addRejectedUrl($url)
     {
-        return in_array((string)$url, $this->urlsRejected);
-    }
+        if ($url instanceof Url) {
+            $url = $url->__toString();
+        }
+        if (!is_string($url)) {
+            throw new \InvalidArgumentException('Url should be a string or an instance of '.Url::class);
+        }
 
-    /**
-     * @param Url $url
-     * @return bool
-     */
-    protected function isUrlCrawled(Url $url)
-    {
-        return in_array((string)$url, $this->urlsCrawled);
-    }
-
-    /**
-     * @param Url $url
-     * @return bool
-     */
-    protected function isUrlQueued(Url $url)
-    {
-        return isset($this->urlsQueued[(string)$url]);
+        $this->urlsRejected[$url] = $url;
     }
 
     /**
@@ -625,13 +608,13 @@ class Crawler implements LoggerAwareInterface
     }
 
     /**
-     * @param string $url
+     * @param Url $url
      * @return DomCrawler
      */
-    protected function requestPage($url)
+    protected function requestPage(Url $url)
     {
         $this->getLogger()->info(sprintf('Crawling page %s', $url));
-        $crawler = $this->client->request('GET', $url);
+        $crawler = $this->client->request('GET', (string)$url);
         $this->getLogger()->info(sprintf('Crawled page %s', $url));
 
         return $crawler;

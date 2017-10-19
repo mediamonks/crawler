@@ -333,7 +333,6 @@ class CrawlerTest extends \PHPUnit_Framework_TestCase
     {
         $reset = get_non_public_method(Crawler::class, 'reset');
         $shouldCrawlUrl = get_non_public_method(Crawler::class, 'shouldCrawlUrl');
-        $addToQueue = get_non_public_method(Crawler::class, 'addUrlToQueue');
 
         $client = new Crawler();
 
@@ -350,9 +349,6 @@ class CrawlerTest extends \PHPUnit_Framework_TestCase
 
         // already rejected, should not be crawled
         $this->assertFalse($shouldCrawlUrl->invokeArgs($client, [Url::createFromString('http://other-host')]));
-
-        $addToQueue->invokeArgs($client, [Url::createFromString('http://my-website/bar')]);
-        $this->assertFalse($shouldCrawlUrl->invokeArgs($client, [Url::createFromString('http://my-website/bar')]));
     }
 
     public function test_update_url()
